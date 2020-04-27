@@ -1,30 +1,54 @@
 public class Main {
 
-    public static int black = 30;
-    public static int red = 31;
-    public static int green = 32;
-    public static int yellow = 33;
-    public static int blue = 34;
-    public static int magenta = 35;
-    public static int cyan = 36;
-    public static int white = 37;
+    public static final int FOREGROUND_BLACK = 30;
+    public static final int FOREGROUND_RED = 31;
+    public static final int FOREGROUND_GREEN = 32;
+    public static final int FOREGROUND_YELLOW = 33;
+    public static final int FOREGROUND_BLUE = 34;
+    public static final int FOREGROUND_MAGENTA = 35;
+    public static final int FOREGROUND_CYAN = 36;
+    public static final int FOREGROUND_WHITE = 37;
 
     public static void setColour(int colourCode) {
         System.out.print("\033[" + colourCode + "m");
     }
 
+    public static void printWithColour(String text, int colour) {
+        setColour(colour);
+        System.out.print(text);
+    }
+
+    public static void printLnWithColour(String text, int colour) {
+        setColour(colour);
+        System.out.println(text);
+    }
+
     public static void printInfo(String name, int healthPoints) {
-        setColour(white);
-        System.out.print("Name: ");
+        printWithColour("Name: ", FOREGROUND_WHITE);
+        printLnWithColour(name, FOREGROUND_RED);
+        printWithColour("Health: ", FOREGROUND_WHITE);
+        printLnWithColour(healthPoints + "", FOREGROUND_RED);
+        System.out.println();
+    }
 
-        setColour(red);
-        System.out.println(name);
+    public static void printHealthPointSword(int healthPoints) {
+        int colouredEqualSigns = healthPoints / 4;
 
-        setColour(white);
-        System.out.print("Health: ");
+        printLnWithColour("            //", FOREGROUND_WHITE);
+        printWithColour("()=========>>", FOREGROUND_WHITE);
 
-        setColour(red);
-        System.out.println(healthPoints);
+        // Print green equals signs
+        for (int i = 0; i < colouredEqualSigns; i = i + 1) {
+            printWithColour("=", FOREGROUND_GREEN);
+        }
+
+        // Print remaining red equal signs
+        for (int i = 0; i < 25 - colouredEqualSigns; i = i + 1) {
+            printWithColour("=", FOREGROUND_RED);
+        }
+
+        printLnWithColour("--", FOREGROUND_WHITE);
+        printLnWithColour("            \\\\", FOREGROUND_WHITE);
     }
 
     public static int calculateNewHealthPoints(int currentHealthPoints, int healthPointChange) {
@@ -43,27 +67,18 @@ public class Main {
     public static void main(String[] args) {
         String name = "Wolorant";
         int healthPoints = 100;
-        printInfo(name, healthPoints);
+        printHealthPointSword(healthPoints);
 
-        System.out.println();
+        while(healthPoints > 0) {
+            int damage = (int) (-10 * Math.random()) - 1;
+            printWithColour("Damage: ", FOREGROUND_WHITE);
+            printLnWithColour(damage + "", FOREGROUND_BLUE);
+            healthPoints = calculateNewHealthPoints(healthPoints, damage);
+            printHealthPointSword(healthPoints);
+            System.out.println();
+        }
 
-        int healthPointChange = -10;
-        healthPoints = calculateNewHealthPoints(healthPoints, healthPointChange);
-        printInfo(name, healthPoints);
-
-        System.out.println();
-
-        healthPointChange = 15;
-        healthPoints = calculateNewHealthPoints(healthPoints, healthPointChange);
-        printInfo(name, healthPoints);
-
-        System.out.println();
-
-        healthPointChange = -300;
-        healthPoints = calculateNewHealthPoints(healthPoints, healthPointChange);
-        printInfo(name, healthPoints);
-
-
+        System.out.println("Er ist tot, Jim!");
     }
 
 }

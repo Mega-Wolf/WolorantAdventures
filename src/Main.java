@@ -2,6 +2,7 @@ import static helpers.Terminal.*;
 
 public class Main {
 
+    // Constants
     public static final int FOREGROUND_BLACK = 30;
     public static final int FOREGROUND_RED = 31;
     public static final int FOREGROUND_GREEN = 32;
@@ -13,6 +14,12 @@ public class Main {
 
     public static final int WIDTH = 80;
     public static final int HEIGHT = 40;
+
+
+    // Variables
+    public static int[][] renderColour = new int[HEIGHT][WIDTH];
+    public static char[][] renderText  = new char[HEIGHT][WIDTH];
+
 
     public static void printInfo(String name, int healthPoints) {
         printWithColour("Name: ", FOREGROUND_WHITE);
@@ -62,6 +69,21 @@ public class Main {
         }
     }
 
+    // Render functions
+
+    public static void renderPixel(int y, int x, char letter, int colourCode) {
+        renderColour[y][x] = colourCode;
+        renderText[y][x] = letter;
+    }
+
+    public static void clearRenderTexture() {
+        for (int y = 0; y < HEIGHT; y++) {
+            for (int x = 0; x < WIDTH; x++) {
+                renderText[y][x] = ' ';
+            }
+        }
+    }
+    
     public static void main(String[] args) {
         /*
         String name = "Wolorant";
@@ -84,32 +106,26 @@ public class Main {
         */
 
         // Setup
-        clearScreen();
-        disableTextCursor();
+        {
+            clearScreen();
+            disableTextCursor();
+        }
 
-
-
-        // Create Wall
+        // Create Level
         TileType[][] tileType = new TileType[HEIGHT][WIDTH];
-        for (int x = 0; x < WIDTH; x++) {
-            tileType[0]         [x] = TileType.WALL;
-            tileType[HEIGHT - 1][x] = TileType.WALL;
-        }
-        for (int y = 0; y < HEIGHT; y++) {
-            tileType[y][0]         = TileType.WALL;
-            tileType[y][WIDTH - 1] = TileType.WALL;
-        }
-
-        // Render Wall
-        setColour(FOREGROUND_WHITE);
-        for (int y = 0; y < HEIGHT; y++) {
-            setCursor(y , 0);
-            for (int x = 0; x < WIDTH; x++) {
-                if (tileType[y][x] == TileType.WALL) {
-                    System.out.print("#");
-                } else {
-                    System.out.print(" ");
+        {
+            for (int y = 0; y < HEIGHT; y++) {
+                for (int x = 0; x < WIDTH; x++) {
+                    tileType[y][x] = TileType.EMPTY;
                 }
+            }
+            for (int x = 0; x < WIDTH; x++) {
+                tileType[0][x] = TileType.WALL;
+                tileType[HEIGHT - 1][x] = TileType.WALL;
+            }
+            for (int y = 0; y < HEIGHT; y++) {
+                tileType[y][0] = TileType.WALL;
+                tileType[y][WIDTH - 1] = TileType.WALL;
             }
         }
 
@@ -118,80 +134,108 @@ public class Main {
 
         boolean isPlaying = true;
         while(isPlaying) {
-            // processInputs
 
+            // ProcessInputs
             int speedX = 0;
             int speedY = 0;
-
-            // Generate random direction
-            int direction = (int) (Math.random() * 4);
-            switch (direction) {
-                case 0: {
-                    speedX = 1;
-                    break;
-                }
-                case 1: {
-                    speedX = -1;
-                    break;
-                }
-                case 2: {
-                    speedY = -1;
-                    break;
-                }
-                default: {
-                    speedY = 1;
-                    break;
-                }
-            }
-
-            // clear screen
-            setCursor(positionY, positionX);
-            printWithColour(" ", FOREGROUND_GREEN);
-
-            // game logic
-            int targetPositionX = positionX + speedX;
-            int targetPositionY = positionY + speedY;
-            switch (tileType[targetPositionY][targetPositionX]) {
-                case EMPTY: {
-                    // Nothing shall happen here
-                    break;
-                }
-                case WALL: {
-                    // Don't actually walk
-                    targetPositionX = positionX;
-                    targetPositionY = positionY;
-                    break;
-                }
-                case LAVA: {
-                    // TODO(Tobi): burn Wolorant
-                    System.out.println("BURN!!!");
-                    break;
-                }
-                case ICE: {
-                    // TODO(Tobi): set automatic slide velocity
-                    System.out.println("SLIDE!!!");
-                    break;
-                }
-                case STAIRCASE: {
-                    System.out.println("Du bist da!");
-                    isPlaying = false;
-                    break;
+            {
+                // Generate random direction
+                int direction = (int) (Math.random() * 4);
+                switch (direction) {
+                    case 0: {
+                        speedX = 1;
+                        break;
+                    }
+                    case 1: {
+                        speedX = -1;
+                        break;
+                    }
+                    case 2: {
+                        speedY = -1;
+                        break;
+                    }
+                    default: {
+                        speedY = 1;
+                        break;
+                    }
                 }
             }
-            positionX = targetPositionX;
-            positionY = targetPositionY;
 
+            // Game Logic
+            {
+                int targetPositionX = positionX + speedX;
+                int targetPositionY = positionY + speedY;
 
-            // render Wolorant
-            setCursor(positionY, positionX);
-            printWithColour("W", FOREGROUND_GREEN);
+                switch (tileType[targetPositionY][targetPositionX]) {
+                    case EMPTY: {
+                        // Nothing shall happen here
+                        break;
+                    }
+                    case WALL: {
+                        // Don't actually walk
+                        targetPositionX = positionX;
+                        targetPositionY = positionY;
+                        break;
+                    }
+                    case LAVA: {
+                        // TODO(Tobi): burn Wolorant
+                        System.out.println("BURN!!!");
+                        break;
+                    }
+                    case ICE: {
+                        // TODO(Tobi): set automatic slide velocity
+                        System.out.println("SLIDE!!!");
+                        break;
+                    }
+                    case STAIRCASE: {
+                        System.out.println("Du bist da!");
+                        isPlaying = false;
+                        break;
+                    }
+                }
+                positionX = targetPositionX;
+                positionY = targetPositionY;
+            }
 
-            shortDelay();
+            // Render
+            {
+                clearRenderTexture();
+
+                // Render Wall
+                for (int y = 0; y < HEIGHT; y++) {
+                    for (int x = 0; x < WIDTH; x++) {
+                        if (tileType[y][x] == TileType.WALL) {
+                            renderColour[y][x] = FOREGROUND_WHITE;
+                            renderText[y][x] = '#';
+                        }
+                    }
+                }
+
+                // Render Wolorant
+                renderColour[positionY][positionX] = FOREGROUND_GREEN;
+                renderText[positionY][positionX] = 'W';
+
+                // Generate and show output render
+                // TODO(Tobi): Only set colour when it is different than the previous one and I don't write a space
+                String outputString = "\033[1;1f";
+
+                for (int y = 0; y < HEIGHT; y++) {
+                    for (int x = 0; x < WIDTH; x++) {
+                        outputString += "\033[" + renderColour[y][x] + "m" + renderText[y][x];
+                    }
+                    outputString += System.lineSeparator();
+                }
+
+                System.out.print(outputString);
+            }
+
         }
 
-        // For the following programs
-        clearScreen();
-        resetColours();
+        // Cleanup
+        {
+            clearScreen();
+            resetColours();
+        }
     }
 
 }

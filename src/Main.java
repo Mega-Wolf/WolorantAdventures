@@ -1,3 +1,5 @@
+import java.util.Scanner;
+
 import static helpers.Terminal.*;
 
 public class Main {
@@ -12,6 +14,17 @@ public class Main {
     public static final int FOREGROUND_CYAN = 36;
     public static final int FOREGROUND_WHITE = 37;
 
+    public static final int BACKGROUND_BLACK = 40;
+    public static final int BACKGROUND_RED = 41;
+    public static final int BACKGROUND_GREEN = 42;
+    public static final int BACKGROUND_YELLOW = 43;
+    public static final int BACKGROUND_BLUE = 44;
+    public static final int BACKGROUND_MAGENTA = 45;
+    public static final int BACKGROUND_CYAN = 46;
+    public static final int BACKGROUND_WHITE = 47;
+
+    public static final int BRIGHT = 60;
+
     public static final int WIDTH = 80;
     public static final int HEIGHT = 40;
 
@@ -19,7 +32,6 @@ public class Main {
     // Variables
     public static int[][] renderColour = new int[HEIGHT][WIDTH];
     public static char[][] renderText  = new char[HEIGHT][WIDTH];
-
 
     public static void printInfo(String name, int healthPoints) {
         printWithColour("Name: ", FOREGROUND_WHITE);
@@ -80,6 +92,7 @@ public class Main {
         for (int y = 0; y < HEIGHT; y++) {
             for (int x = 0; x < WIDTH; x++) {
                 renderText[y][x] = ' ';
+                renderColour[y][x] = BACKGROUND_BLACK;
             }
         }
     }
@@ -105,10 +118,13 @@ public class Main {
         System.out.println("Er ist tot, Jim!");
         */
 
+        Scanner input = new Scanner(System.in);
+
         // Setup
         {
             clearScreen();
             disableTextCursor();
+            setColour(BACKGROUND_BLACK);
         }
 
         // Create Level
@@ -132,6 +148,8 @@ public class Main {
         int positionX = 4;
         int positionY = 8;
 
+        Enemy firstEnemy = new Enemy(20, 20, 50);
+
         boolean isPlaying = true;
         while(isPlaying) {
 
@@ -139,27 +157,32 @@ public class Main {
             int speedX = 0;
             int speedY = 0;
             {
-                // Generate random direction
-                int direction = (int) (Math.random() * 4);
-                switch (direction) {
-                    case 0: {
-                        speedX = 1;
-                        break;
-                    }
-                    case 1: {
-                        speedX = -1;
-                        break;
-                    }
-                    case 2: {
+                String inputText = input.nextLine();
+
+                switch (inputText) {
+                    case "w": {
                         speedY = -1;
                         break;
                     }
-                    default: {
+                    case "a": {
+                        speedX = -1;
+                        break;
+                    }
+                    case "s": {
                         speedY = 1;
                         break;
                     }
+                    case "d": {
+                        speedX = 1;
+                        break;
+                    }
+                    case "o": {
+                        isPlaying = false;
+                    }
                 }
             }
+
+
 
             // Game Logic
             {
@@ -212,8 +235,10 @@ public class Main {
                 }
 
                 // Render Wolorant
-                renderColour[positionY][positionX] = FOREGROUND_GREEN;
-                renderText[positionY][positionX] = 'W';
+                renderPixel(positionY, positionX, 'W', FOREGROUND_GREEN + BRIGHT);
+
+                // Render First enemy
+                renderPixel(firstEnemy.getY(), firstEnemy.getX(), 'E', FOREGROUND_RED + BRIGHT);
 
                 // Generate and show output render
                 // TODO(Tobi): Only set colour when it is different than the previous one and I don't write a space
@@ -225,7 +250,7 @@ public class Main {
                     }
                     outputString += System.lineSeparator();
                 }
-
+                setColour(BACKGROUND_BLACK);
                 System.out.print(outputString);
             }
 

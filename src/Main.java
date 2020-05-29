@@ -1,37 +1,24 @@
+import def.Enemy;
+import def.TileType;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.util.Scanner;
 
+import static def.Constants.*;
 import static helpers.Terminal.*;
 
 public class Main {
 
-    // Constants
-    public static final int FOREGROUND_BLACK = 30;
-    public static final int FOREGROUND_RED = 31;
-    public static final int FOREGROUND_GREEN = 32;
-    public static final int FOREGROUND_YELLOW = 33;
-    public static final int FOREGROUND_BLUE = 34;
-    public static final int FOREGROUND_MAGENTA = 35;
-    public static final int FOREGROUND_CYAN = 36;
-    public static final int FOREGROUND_WHITE = 37;
-
-    public static final int BACKGROUND_BLACK = 40;
-    public static final int BACKGROUND_RED = 41;
-    public static final int BACKGROUND_GREEN = 42;
-    public static final int BACKGROUND_YELLOW = 43;
-    public static final int BACKGROUND_BLUE = 44;
-    public static final int BACKGROUND_MAGENTA = 45;
-    public static final int BACKGROUND_CYAN = 46;
-    public static final int BACKGROUND_WHITE = 47;
-
-    public static final int BRIGHT = 60;
-
-    public static final int WIDTH = 80;
-    public static final int HEIGHT = 40;
-
 
     // Variables
-    public static int[][] renderColour = new int[HEIGHT][WIDTH];
-    public static char[][] renderText  = new char[HEIGHT][WIDTH];
+    public static int[][] renderColour;
+    public static char[][] renderText;
+
+    public static int width;
+    public static int height;
 
     public static void printInfo(String name, int healthPoints) {
         printWithColour("Name: ", FOREGROUND_WHITE);
@@ -89,18 +76,36 @@ public class Main {
     }
 
     public static void clearRenderTexture() {
-        for (int y = 0; y < HEIGHT; y++) {
-            for (int x = 0; x < WIDTH; x++) {
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
                 renderText[y][x] = ' ';
                 renderColour[y][x] = BACKGROUND_BLACK;
             }
         }
     }
+
+    public static boolean isAdjacent(int x1, int y1, int x2, int y2) {
+        int xDif = Math.abs(x1 - x2);
+        int yDif = Math.abs(y1 - y2);
+
+        return ((xDif + yDif) == 1);
+    }
+
+    public static int squareDistance(int x1, int y1, int x2, int y2) {
+        int xDif = x1 - x2;
+        int yDif = y1 - y2;
+
+        return xDif * xDif + yDif * yDif;
+    }
+
+
     
     public static void main(String[] args) {
+        int healthPoints = 100;
+
         /*
         String name = "Wolorant";
-        int healthPoints = 100;
+
         printHealthPointSword(healthPoints);
 
         printHealthPointSword(3);
@@ -118,7 +123,7 @@ public class Main {
         System.out.println("Er ist tot, Jim!");
         */
 
-        Scanner input = new Scanner(System.in);
+
 
         // Setup
         {
@@ -128,6 +133,7 @@ public class Main {
         }
 
         // Create Level
+        /*
         TileType[][] tileType = new TileType[HEIGHT][WIDTH];
         {
             for (int y = 0; y < HEIGHT; y++) {
@@ -143,15 +149,77 @@ public class Main {
                 tileType[y][0] = TileType.WALL;
                 tileType[y][WIDTH - 1] = TileType.WALL;
             }
+
+            tileType[10 + (int) (Math.random() * 15)][10 + (int) (Math.random() * 15) ] = TileType.STAIRCASE;
         }
 
-        int positionX = 4;
-        int positionY = 8;
+        int positionX = 2;
+        int positionY = 2;
 
-        Enemy firstEnemy = new Enemy(20, 20, 50);
+        Enemy[] enemies = new Enemy[20];
+        for (int e_i = 0; e_i < enemies.length; ++e_i) {
+            enemies[e_i] = new Enemy(5 + (int) (Math.random() * 20), 5 + (int) (Math.random() * 20),20 + (int) (Math.random() * 50));
+        }
+
+        */
+
+        // Load level
+        TileType[][] tileType = new TileType[0][0];
+        Enemy[] enemies = new Enemy[0];
+        int positionX = 2;
+        int positionY = 2;
+        {
+            try (Scanner levelScanner = new Scanner(new BufferedReader(new FileReader(new File("levels/Level0.txt"))));)
+            {
+                levelScanner.nextLine(); // version number
+                String dimensionLine = levelScanner.nextLine();
+                String[] dimensionsAsSStrings = dimensionLine.split(",");
+                width = Integer.parseInt(dimensionsAsSStrings[0]);
+                height = Integer.parseInt(dimensionsAsSStrings[1]);
+
+                renderColour = new int[height][width];
+                renderText = new char[height][width];
+                tileType = new TileType[height][width];
+                for (int y = 0; y < height; y++) {
+                    for (int x = 0; x < width; x++) {
+                        tileType[y][x] = TileType.EMPTY;
+                    }
+                }
+
+                for (int h_i = 0; h_i < height; h_i++) {
+                    String line = levelScanner.nextLine();
+                    for (int w_i = 0; w_i < width; w_i++) {
+                        char c = Character.toUpperCase(line.charAt(w_i));
+                        switch (c) {
+                            case '#': {
+                                tileType[h_i][w_i] = TileType.WALL;
+                                break;
+                            }
+                            case 'W': {
+                                positionX = w_i;
+                                positionY = h_i;
+                                break;
+                            }
+                            case 'S': {
+                                tileType[h_i][w_i] = TileType.STAIRCASE;
+                                break;
+                            }
+                        }
+                    }
+                }
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+
+
+        Scanner input = new Scanner(System.in);
+
 
         boolean isPlaying = true;
         while(isPlaying) {
+
+            boolean isHitting = false;
 
             // ProcessInputs
             int speedX = 0;
@@ -176,6 +244,13 @@ public class Main {
                         speedX = 1;
                         break;
                     }
+
+                    case " ": {
+                        isHitting = true;
+                        break;
+                    }
+
+
                     case "o": {
                         isPlaying = false;
                     }
@@ -211,11 +286,50 @@ public class Main {
                         break;
                     }
                     case STAIRCASE: {
-                        System.out.println("Du bist da!");
                         isPlaying = false;
+                        System.out.println("ou made it through with " + healthPoints + " health points.");
                         break;
                     }
                 }
+
+                // Monster interaction
+                for (int e_i = 0; e_i < enemies.length; e_i++) {
+                    if (enemies[e_i].isAlive()) {
+                        int squareDistance = squareDistance(targetPositionX, targetPositionY, enemies[e_i].getX(), enemies[e_i].getY());
+
+                        if (squareDistance <= 1) {
+                            if (!isHitting) {
+                                healthPoints = calculateNewHealthPoints(healthPoints, -20);
+                            }
+
+                            enemies[e_i].kill();
+                        } else {
+                            if (squareDistance < enemies[e_i].getSquareDistanceAlarm()) {
+                                // enemy walks towards Wolorant
+
+                                int xDif = positionX - enemies[e_i].getX();
+                                int yDif = positionY - enemies[e_i].getY();
+
+                                int walkX = 0;
+                                int walkY = 0;
+
+                                if (Math.abs(xDif) > Math.abs(yDif)) {
+                                    walkX = (int) Math.signum(xDif);
+                                } else {
+                                    walkY = (int) Math.signum(yDif);
+                                }
+
+                                enemies[e_i].setX(enemies[e_i].getX() + walkX);
+                                enemies[e_i].setY(enemies[e_i].getY() + walkY);
+                            }
+                        }
+                    }
+                }
+
+
+
+
+
                 positionX = targetPositionX;
                 positionY = targetPositionY;
             }
@@ -224,12 +338,11 @@ public class Main {
             {
                 clearRenderTexture();
 
-                // Render Wall
-                for (int y = 0; y < HEIGHT; y++) {
-                    for (int x = 0; x < WIDTH; x++) {
-                        if (tileType[y][x] == TileType.WALL) {
-                            renderColour[y][x] = FOREGROUND_WHITE;
-                            renderText[y][x] = '#';
+                // Render Tiles
+                for (int y = 0; y < height; y++) {
+                    for (int x = 0; x < width; x++) {
+                        if (tileType[y][x] != TileType.EMPTY) {
+                            renderPixel(y, x, tileType[y][x].letter, tileType[y][x].colour);
                         }
                     }
                 }
@@ -238,20 +351,30 @@ public class Main {
                 renderPixel(positionY, positionX, 'W', FOREGROUND_GREEN + BRIGHT);
 
                 // Render First enemy
-                renderPixel(firstEnemy.getY(), firstEnemy.getX(), 'E', FOREGROUND_RED + BRIGHT);
+                for (int e_i = 0; e_i < enemies.length; e_i++) {
+                    if (enemies[e_i].isAlive()) {
+                        renderPixel(enemies[e_i].getY(), enemies[e_i].getX(), 'E', FOREGROUND_RED + BRIGHT);
+                    }
+                }
 
                 // Generate and show output render
                 // TODO(Tobi): Only set colour when it is different than the previous one and I don't write a space
                 String outputString = "\033[1;1f";
 
-                for (int y = 0; y < HEIGHT; y++) {
-                    for (int x = 0; x < WIDTH; x++) {
+                for (int y = 0; y < height; y++) {
+                    for (int x = 0; x < width; x++) {
                         outputString += "\033[" + renderColour[y][x] + "m" + renderText[y][x];
                     }
                     outputString += System.lineSeparator();
                 }
                 setColour(BACKGROUND_BLACK);
                 System.out.print(outputString);
+
+                printHealthPointSword(healthPoints);
+
+                if (healthPoints == 0) {
+                    isPlaying = false;
+                }
             }
 
         }
